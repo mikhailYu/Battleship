@@ -1,2 +1,2 @@
 # Battleship
-Battleship game in javascript
+Battleship game in javascript, also a big exercise in TDD.
