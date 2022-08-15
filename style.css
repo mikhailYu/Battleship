@@ -1,0 +1,56 @@
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+  text-decoration: none;
+  background: none;
+  outline: none;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  font-family: "Titillium Web", sans-serif;
+}
+
+#main {
+  width: 100vw;
+  height: 100vh;
+}
+
+.gameBoardsCont {
+  width: 100%;
+  height: 100%;
+}
+
+.gameBoardOuter {
+  background-color: rgb(0, 0, 75);
+  width: 500px;
+  height: 500px;
+
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+
+  resize: both;
+  overflow: auto;
+}
+
+.tileSpace {
+  background-color: lightblue;
+  border: 1px solid darkblue;
+}
+
+.tileSpace.occupied {
+  background-color: rgb(79, 135, 255);
+}
+
+.tileSpace.missed {
+  background-color: rgb(15, 22, 36);
+}
+
+.tileSpace.hit {
+  background-color: rgb(255, 34, 63);
+}
