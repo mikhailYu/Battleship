@@ -1,8 +1,13 @@
-import { data } from "./storeData";
-import { createShipObjs, Ship } from "./ship";
-import { gameStatus, shipPlacementComplete } from "./gameFlow";
+import { data, playerName, lastShot } from "./storeData";
+import {
+  getCurrentPlacedShip,
+  isPlacementValid,
+  cycleToNextShip,
+} from "./placeShips";
+import { gameStatus, waitTime } from "./gameFlow";
+import { shotFiredAt } from "./shotFired";
 
-// DO NOW. Put ship placement checks in another mod
+let inGameNotifText = document.querySelector(".inGameNotif");
 
 function generateGameboard(player) {
   const gameBoardCont = document.querySelector(".gameBoardsCont");
@@ -16,53 +21,26 @@ function generateGameboard(player) {
   function forEachTile(tile, index) {
     const tileSpace = document.createElement("div");
     tileSpace.classList.add("tileSpace");
+    if (player === "player2") {
+      tileSpace.classList.add("opponent");
+    }
+
     tileSpace.addEventListener("click", () => {
       tileClicked(tile, player, index);
     });
+
     thisGameboardCont.appendChild(tileSpace);
+
     data[player].domData.push(tileSpace);
   }
 }
 
 function tileClicked(tile, player, index) {
-  if (gameStatus === "placingShips") {
+  if (gameStatus === "placingShips" && player === "player1") {
     domShipPlacement(player, index);
+  } else if (gameStatus === "player1 turn") {
+    shotFiredAt("player2", tile);
   }
-}
-
-function placeShips(player) {
-  gameStatus = "placingShips";
-  createShipObjs(player);
-  let currentShipID = data["globalData"].currentPlacedShipID;
-  placeShipOnTiles(player, currentShipID);
-}
-
-function placeShipOnTiles(player, shipID) {
-  if (!checkIfAllPlaced(player)) {
-    currentPlacedShip(shipID);
-  } else {
-    shipPlacementComplete();
-  }
-
-  function checkIfAllPlaced(player) {
-    let amountPlaced = 0;
-
-    data[player].shipData.forEach((element) => {
-      if (element.placed == true) {
-        amountPlaced++;
-      }
-    });
-
-    return amountPlaced === 5 ? true : false;
-  }
-}
-
-function currentPlacedShip(shipID) {
-  data["globalData"].currentPlacedShipID = shipID;
-}
-
-function getCurrentPlacedShip() {
-  return data["globalData"].currentPlacedShipID;
 }
 
 function domShipPlacement(player, tileID) {
@@ -76,112 +54,56 @@ function domShipPlacement(player, tileID) {
   }
 }
 
-function isPlacementValid(info) {
-  let mainTileDom = data[info.player].domData[info.tileID];
-  let mainTileObj = data[info.player].gameBoardData[info.tileID];
-  let affectedTiles = [];
-  if (checkSpace() && checkOccupied()) {
-    affectedTiles.forEach((val) => setOccupyTiles(val));
-    return true;
+function switchActiveTiles(player) {
+  let getTile = data[player].domData;
+  getTile.forEach((tile) => tile.classList.toggle("active"));
+}
+
+function inGameNotif(str) {
+  inGameNotifText.style.transform = "scale(0)";
+  setTimeout(() => {
+    inGameNotifText.textContent = str;
+    inGameNotifText.style.transform = "scale(1)";
+  }, waitTime / 8);
+}
+
+function genStr(player) {
+  let lastPlayer, nextPlayer;
+
+  if (player === "player1") {
+    lastPlayer = playerName;
+    nextPlayer = "Computer";
   } else {
-    return false;
+    lastPlayer = "Computer";
+    nextPlayer = playerName;
   }
 
-  function setOccupyTiles(val) {
-    let neededDataGB = data[info.player].gameBoardData[val];
-    let thisShip = data[info.player].shipData[info.currentShipID];
+  let string = lastPlayer + lastShot + nextPlayer + "'s turn.";
 
-    neededDataGB.occupied = true;
-    neededDataGB.updateTileOccupied();
-    neededDataGB.shipOccuping = thisShip.shipName;
+  inGameNotif(string);
+}
 
-    thisShip.placed = true;
-  }
+function deathAnim(loser) {
+  let allTiles = data[loser].domData;
+  let disp = 10;
+  let promise = Promise.resolve();
 
-  function checkSpace() {
-    if (info.shipAxis === "vertical") {
-      return checkSpaceAxis("yPos");
-    } else {
-      return checkSpaceAxis("xPos");
-    }
+  allTiles.forEach((tile) => {
+    promise = promise.then(function () {
+      tile.classList.add("dead");
 
-    function checkSpaceAxis(axis) {
-      if (mainTileObj.position[axis] + (info.shipLength - 1) > 10) {
-        return false;
-      } else {
-        pushAffectedTiles();
-        return true;
-      }
-    }
-  }
-
-  function pushAffectedTiles() {
-    let xPosInit = mainTileObj.position["xPos"],
-      yPosInit = mainTileObj.position["yPos"];
-
-    for (let i = 0; i < info.shipLength; i++) {
-      affectedTiles.push(filterFind(xPosInit, yPosInit));
-      info.shipAxis == "vertical" ? yPosInit++ : xPosInit++;
-    }
-  }
-
-  function checkOccupied() {
-    let isOccupied = false;
-
-    affectedTiles.forEach((val) => cycleArrForOccupied(val));
-
-    function cycleArrForOccupied(val) {
-      let startY = data[info.player].gameBoardData[val].position["yPos"] - 1,
-        startX = data[info.player].gameBoardData[val].position["xPos"] - 1;
-
-      for (let x = startX; x < startX + 3; x++) {
-        for (let y = startY; y < startY + 3; y++) {
-          if (
-            data[info.player].gameBoardData[filterFind(x, y)]["occupied"] ==
-            true
-          ) {
-            isOccupied = true;
-          }
-        }
-      }
-    }
-
-    if (isOccupied == false) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-  function filterFind(x, y) {
-    if (x <= 0) {
-      x = 1;
-    }
-
-    if (y <= 0) {
-      y = 1;
-    }
-
-    if (x > 10) {
-      x = 10;
-    }
-
-    if (y > 10) {
-      y = 10;
-    }
-    let filterFind = data[info.player].gameBoardData;
-    const filtered = filterFind.filter((obj) => {
-      return obj.position["xPos"] === x && obj.position["yPos"] === y;
+      return new Promise(function (resolve) {
+        setTimeout(resolve, disp);
+      });
     });
-    return filtered[0].index;
-  }
+  });
 }
 
-function cycleToNextShip(player) {
-  let cycleShipID = data["globalData"].currentPlacedShipID;
-
-  cycleShipID++;
-
-  placeShipOnTiles(player, cycleShipID);
-}
-
-export { generateGameboard, placeShips };
+export {
+  generateGameboard,
+  switchActiveTiles,
+  domShipPlacement,
+  inGameNotif,
+  genStr,
+  deathAnim,
+};

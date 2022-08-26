@@ -1,5 +1,5 @@
 import { GameBoard } from "./modules/gameBoard";
 
-import { initializeGame } from "./modules/gameFlow";
+import { setUp } from "./modules/gameFlow";
 
-initializeGame();
+setUp();

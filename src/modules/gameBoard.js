@@ -4,6 +4,7 @@ function GameBoard() {
     setTiles: function (player) {
       function Tile(posObj) {
         return {
+          player: player,
           index: data[player].gameBoardData.length,
           position: posObj,
           occupied: false,
@@ -12,9 +13,20 @@ function GameBoard() {
           getTile() {
             return position;
           },
-          updateTileOccupied() {
+          updateTileOccupied(player) {
             const domTile = data[player].domData[this.index];
             domTile.classList.add("occupied");
+          },
+          markTileShot(isHit) {
+            const domTile = data[player].domData[this.index];
+            this.shot = true;
+            domTile.classList.remove("occupied");
+
+            if (isHit == true) {
+              domTile.classList.add("hit");
+            } else {
+              domTile.classList.add("missed");
+            }
           },
         };
       }
